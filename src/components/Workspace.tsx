@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { recommendedTool } from '../../shared/quantities';
-import { TOOL_LABELS, type ToolId } from '../../shared/types';
+import { COLOR_MODE_LABELS, TOOL_LABELS, type ColorMode, type ToolId } from '../../shared/types';
 import { displayUnit } from '../../shared/units';
 import { detectScaleRatio, loadDocument, metersPerPointForRatio, pageText } from '../pdf';
 import { useApp, type Tool } from '../store';
@@ -190,6 +190,9 @@ export function Workspace({ onHome }: { onHome: () => void }) {
               { sep: true, label: '' },
               { label: 'Quantités sur le plan', checked: s.showQuantities, action: () => s.setUi({ showQuantities: !s.showQuantities }) },
               { label: 'Légende automatique', checked: s.showLegend, action: () => s.setUi({ showLegend: !s.showLegend }) },
+              { sep: true, label: '' },
+              ...(Object.keys(COLOR_MODE_LABELS) as ColorMode[]).map((k) => ({ label: `Couleur ${COLOR_MODE_LABELS[k]}`, checked: (data.settings.colorMode ?? 'article') === k, action: () => s.setSettings({ colorMode: k }) })),
+              { sep: true, label: '' },
               { label: 'Couleur de fond…', action: dlg('parametres') },
             ]}
           />
@@ -231,14 +234,14 @@ export function Workspace({ onHome }: { onHome: () => void }) {
             label="Analyse"
             items={[
               { label: `Cohérence plans / CCTP / DPGF (${issues.length})`, icon: 'coherence', action: dlg('coherence') },
-              { label: 'Tableau de bord et ratios (étape suivante)', disabled: true },
+              { label: 'Tableau de bord et ratios', icon: 'tableau', action: dlg('tableau-de-bord') },
             ]}
           />
           <Menu
             label="Exports"
             items={[
-              { label: 'DPGF quantifiée et chiffrée (.xlsx) — étape suivante', disabled: true },
-              { label: 'Rapport de quantités (PDF) — étape suivante', disabled: true },
+              { label: 'Excel : DPGF chiffrée, détail des mesures, tableau de bord…', icon: 'tableur', action: dlg('export', 'xlsx') },
+              { label: 'PDF : rapport par lot, ratios, plans annotés…', icon: 'pdf', action: dlg('export', 'pdf') },
             ]}
           />
           <Menu label="Aide" items={[{ label: 'Raccourcis et principes', icon: 'aide', action: dlg('aide') }]} />
@@ -302,6 +305,9 @@ export function Workspace({ onHome }: { onHome: () => void }) {
             <span className="muted">Aucun article actif — cliquez une ligne de la DPGF</span>
           )}
         </div>
+        <button className="tb" onClick={dlg('tableau-de-bord')} title="Tableau de bord et ratios">
+          <Icon.tableau /> <span>Tableau de bord</span>
+        </button>
         <button className={`tb coh${errors ? ' bad' : ''}`} onClick={dlg('coherence')} title="Analyse de cohérence">
           {errors ? <Icon.alerte /> : <Icon.coherence />} <span>{errors ? `${errors} erreur(s)` : 'Cohérence'} · {issues.length}</span>
         </button>

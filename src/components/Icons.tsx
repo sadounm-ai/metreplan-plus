@@ -129,6 +129,23 @@ export const Icon = {
     </Svg>
   ),
   /** Tableur (DPGF) */
+  /** Tableau de bord (barres) */
+  tableau: (p: P) => (
+    <Svg {...p}>
+      <path d="M3 16.5h14" />
+      <rect x={4.5} y={9} width={2.6} height={7.5} rx={0.6} />
+      <rect x={8.7} y={4} width={2.6} height={12.5} rx={0.6} />
+      <rect x={12.9} y={11.5} width={2.6} height={5} rx={0.6} />
+    </Svg>
+  ),
+  /** Document PDF */
+  pdf: (p: P) => (
+    <Svg {...p}>
+      <path d="M5 2.5h7l3.5 3.5v11.5H5z" />
+      <path d="M12 2.5V6h3.5" />
+      <path d="M7.5 11h5M7.5 14h3.5" />
+    </Svg>
+  ),
   tableur: (p: P) => (
     <Svg {...p}>
       <rect x={3} y={3.5} width={14} height={13} rx={1.5} />

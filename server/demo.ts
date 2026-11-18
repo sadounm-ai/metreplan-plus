@@ -415,14 +415,18 @@ export function buildDemoState(planDocId: string, cctp: CctpArticle[]): Editable
   // Erreur volontaire : imperméabilisation (m²) mesurée en longueur sans hauteur
   add(0, '01-3-5-1 1', 'E1', rectPts([0, 0, 20, 11]), { label: 'Périphérie soubassements' });
   // RDC
-  add(1, '01-3-5-4 4', 'E2', rectPts([0.2, 0.2, 19.8, 10.8]), { holes: [rectPts(LIFT)], label: 'Dallage RDC (trémie ascenseur déduite)' });
+  add(1, '01-3-5-4 4', 'E2', rectPts([0.2, 0.2, 19.8, 10.8]), { holes: [rectPts(LIFT)], label: 'Dallage RDC (trémie ascenseur déduite)', room: 'Emprise RDC', tags: ['SHO'] });
   add(1, '01-3-6-1 4', 'E1', rectPts([0, 0, 20, 11]), { label: 'Façades RDC' });
   add(1, '01-3-6-2 1', 'E3', [vp(8.59, 0.2), vp(8.59, 10.8)], { label: 'Refend ouest', params: { hauteur: 2.7 } });
   add(1, '01-3-6-2 1', 'E3', [vp(11.41, 0.2), vp(11.41, 10.8)], { label: 'Refend est' });
   // Erreur volontaire : rive de trémie (ml) mesurée avec l'outil Surface
   add(1, '01-3-6-5 2', 'E2', rectPts(STAIR), { label: 'Trémie escalier' });
-  for (const r of ROOMS_A) {
-    add(1, r.sol === 'pvc' ? '09-1 1' : '09-2 1', 'E2', rectPts(r.r), { layer: 1, label: `Log. A — ${r.name}`, room: r.name, tags: ['SH', 'SP', 'SHO'] });
+  // Pièces des deux logements : surfaces habitables et de plancher (tableau de bord)
+  for (const [log, rooms] of [['A', ROOMS_A], ['B', ROOMS_B]] as const) {
+    for (const r of rooms) {
+      const name = `Log. ${log} — ${r.name}`;
+      add(1, r.sol === 'pvc' ? '09-1 1' : '09-2 1', 'E2', rectPts(r.r), { layer: 1, label: name, room: name, tags: ['SH', 'SP'] });
+    }
   }
   add(1, '07-1 1', 'E3', [vp(5.535, 0.2), vp(5.535, 6.0)], { layer: 1, label: 'Cloison séjour / cuisine' });
   add(1, '07-1 1', 'E3', [vp(0.2, 6.035), vp(8.5, 6.035)], { layer: 1, label: 'Cloison dégagement nord' });

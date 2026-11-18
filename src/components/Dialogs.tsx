@@ -7,12 +7,15 @@ import { normalizeCode, parseCctp, type CctpParseResult } from '../../shared/cct
 import type { DpgfParseResult } from '../../shared/dpgfParser';
 import { uid } from '../../shared/ids';
 import { documentLines } from '../../shared/pdfText';
-import { PHASES, type DpgfLine, type MeasureParams, type Phase, type PlanPage } from '../../shared/types';
+import { COLOR_MODE_LABELS, PHASES, SYMBOL_LABELS, type ColorMode, type SymbolId, type DpgfLine, type MeasureParams, type Phase, type PlanPage } from '../../shared/types';
 import { displayUnit, normalizeUnit } from '../../shared/units';
 import { api } from '../api';
 import { fmt, parseNum } from '../format';
 import { detectScaleRatio, metersPerPointForRatio, openLocalPdf, pageText, registerLocalDocument } from '../pdf';
 import { useApp } from '../store';
+import { DashboardDialog } from './Dashboard';
+import { ExportDialog } from './Exports';
+import { LegendSwatch } from './PlanView';
 
 export function Modal({ title, children, onClose, wide, footer }: { title: string; children: ReactNode; onClose: () => void; wide?: boolean; footer?: ReactNode }) {
   return (
@@ -55,6 +58,10 @@ export function Dialogs() {
       return <CoherenceDialog />;
     case 'aide':
       return <HelpDialog />;
+    case 'tableau-de-bord':
+      return <DashboardDialog />;
+    case 'export':
+      return <ExportDialog kind={dialog.payload as 'xlsx' | 'pdf'} />;
     default:
       return null;
   }
@@ -554,6 +561,23 @@ function ArticleDialog({ id }: { id: string }) {
               <input type="color" value={d.color || '#d6336c'} onChange={(e) => setD({ ...d, color: e.target.value })} />
             </label>
           </div>
+          <div className="field">
+            <span>Symbole des objets comptés (E4)</span>
+            <div className="row symbols">
+              {(Object.keys(SYMBOL_LABELS) as SymbolId[]).map((k) => (
+                <button
+                  key={k}
+                  type="button"
+                  className={`sym-chip${(d.symbol ?? 'cercle') === k ? ' on' : ''}`}
+                  onClick={() => setD({ ...d, symbol: k })}
+                  title={SYMBOL_LABELS[k]}
+                  aria-pressed={(d.symbol ?? 'cercle') === k}
+                >
+                  <LegendSwatch color={d.color || '#d6336c'} kind="symbole" symbol={k} /> {SYMBOL_LABELS[k]}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="grid2">
             {numField('dpgfQty', 'Quantité de la DPGF importée (contrôle)')}
             {numField('manualQty', 'Quantité manuelle ajoutée (forfaits, compléments)')}
@@ -662,6 +686,16 @@ function SettingsDialog() {
           <input defaultValue={String(s.ecartThreshold).replace('.', ',')} onBlur={(e) => setS({ ...s, ecartThreshold: parseNum(e.target.value) ?? s.ecartThreshold })} />
         </label>
       </div>
+      <label className="field">
+        <span>Couleur des mesures (écran et exports)</span>
+        <select value={s.colorMode ?? 'article'} onChange={(e) => setS({ ...s, colorMode: e.target.value as ColorMode })}>
+          {(Object.keys(COLOR_MODE_LABELS) as ColorMode[]).map((k) => (
+            <option key={k} value={k}>
+              Couleur {COLOR_MODE_LABELS[k]}
+            </option>
+          ))}
+        </select>
+      </label>
       <label className="field">
         <span>Couleur de fond de la zone plan</span>
         <div className="row">

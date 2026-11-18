@@ -1286,3 +1286,123 @@ body.resizing * {
   max-width: none;
   width: auto;
 }
+
+/* Tableau de bord */
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (max-width: 700px) {
+  .kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.kpi {
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.kpi-label {
+  font-size: 11px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kpi-value {
+  font-size: 17px;
+  color: var(--top);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--line);
+}
+.tab {
+  border: 0;
+  background: none;
+  padding: 6px 10px;
+  cursor: pointer;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.tab.on {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+.simple.dash td,
+.simple.dash th {
+  font-variant-numeric: tabular-nums;
+}
+.simple.dash .r {
+  text-align: right;
+  white-space: nowrap;
+}
+.simple.dash tfoot th {
+  border-top: 2px solid var(--line);
+}
+.bar {
+  display: inline-block;
+  width: calc(100% - 48px);
+  height: 8px;
+  background: #e9edf2;
+  border-radius: 4px;
+  vertical-align: middle;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+}
+.bar-pct {
+  display: inline-block;
+  width: 44px;
+  text-align: right;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.modal .chk {
+  white-space: normal;
+  align-items: flex-start;
+}
+.modal fieldset .chk {
+  display: flex;
+  margin: 3px 0;
+}
+
+/* Légende et symboles */
+.lg-swatch {
+  flex: none;
+  margin-right: 5px;
+}
+.symbols {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.sym-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 14px;
+  padding: 3px 9px 3px 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.sym-chip.on {
+  border-color: var(--accent);
+  background: var(--accent-2);
+  font-weight: 600;
+}

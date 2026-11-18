@@ -4,8 +4,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { PDFPageProxy, RenderTask } from 'pdfjs-dist';
 import { centroid, dist, distToPolyline, orthoSnap, pointInPolygon, polygonArea, polylineLength } from '../../shared/geometry';
+import { buildLegend, measureColor, symbolPath } from '../../shared/display';
 import { computeMeasure } from '../../shared/quantities';
-import { TOOL_LABELS, type Measure, type Pt } from '../../shared/types';
+import { COLOR_MODE_LABELS, TOOL_LABELS, type Measure, type Pt, type SymbolId } from '../../shared/types';
 import { displayUnit } from '../../shared/units';
 import { loadDocument, vectorSnapIndex, type SnapIndex } from '../pdf';
 import { useApp } from '../store';
@@ -29,6 +30,16 @@ function labelAnchor(m: Measure): Pt | null {
   const a = m.points[i];
   const b = m.points[(i + 1) % m.points.length] ?? a;
   return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 - 3];
+}
+
+export function LegendSwatch({ color, kind, symbol }: { color: string; kind: 'surface' | 'trait' | 'symbole'; symbol?: SymbolId }) {
+  return (
+    <svg className="lg-swatch" width={16} height={12} viewBox="-8 -6 16 12" aria-hidden>
+      {kind === 'surface' && <rect x={-7} y={-5} width={14} height={10} rx={2} fill={color} fillOpacity={0.35} stroke={color} strokeWidth={1.5} />}
+      {kind === 'trait' && <line x1={-7} y1={0} x2={7} y2={0} stroke={color} strokeWidth={3} strokeLinecap="round" />}
+      {kind === 'symbole' && <path d={symbolPath(symbol, 4.6)} fill={color} />}
+    </svg>
+  );
 }
 
 export function PlanView() {
@@ -437,19 +448,23 @@ export function PlanView() {
     return `${fmt(polylineLength(pts) * mpp)} m`;
   })();
 
-  const legend = useMemo(() => {
-    const byArt = new Map<string, { qty: number; n: number }>();
-    for (const m of pageMeasures) {
-      const l = lineById.get(m.articleId);
-      if (!l) continue;
-      const r = computeMeasure(m, l, page ?? undefined);
-      const e = byArt.get(l.id) ?? { qty: 0, n: 0 };
-      e.qty += r.status === 'ok' ? r.value : 0;
-      e.n++;
-      byArt.set(l.id, e);
-    }
-    return [...byArt.entries()].map(([id, v]) => ({ line: lineById.get(id)!, ...v })).sort((a, b) => a.line.order - b.line.order);
-  }, [pageMeasures, lineById, page]);
+  const colorMode = data.settings.colorMode ?? 'article';
+  const legend = useMemo(
+    () =>
+      buildLegend(
+        pageMeasures,
+        lineById,
+        layerById,
+        colorMode,
+        (m, l) => {
+          const r = computeMeasure(m, l, page ?? undefined);
+          return r.status === 'ok' ? r.value : 0;
+        },
+        (l) => displayUnit(l?.unit),
+        TOOL_LABELS,
+      ),
+    [pageMeasures, lineById, layerById, page, colorMode],
+  );
 
   const cursorStyle = pan.current ? 'grabbing' : tool === 'pan' || space ? 'grab' : tool === 'select' ? 'default' : 'crosshair';
 
@@ -470,7 +485,7 @@ export function PlanView() {
   const renderMeasure = (m0: Measure) => {
     const m = dragPreview?.id === m0.id ? dragPreview : m0;
     const l = lineById.get(m.articleId);
-    const color = l?.color || layerById.get(m.layerId)?.color || '#d6336c';
+    const color = measureColor(m, l, layerById.get(m.layerId), colorMode);
     const selected = m.id === selectedMeasureId;
     const hl = highlightArticleId === m.articleId;
     const dim = highlightArticleId && !hl ? 0.28 : 1;
@@ -502,7 +517,7 @@ export function PlanView() {
         {m.tool === 'E4' &&
           m.points.map((p, i) => (
             <g key={i} transform={`translate(${p[0]},${p[1]}) scale(${1 / z})`}>
-              <circle r={selected ? 9 : 7.5} fill={color} stroke="#fff" strokeWidth={1.5} />
+              <path d={symbolPath(l?.symbol, selected ? 9 : 7.5)} fill={color} stroke="#fff" strokeWidth={1.5} />
               <text y={3.5} textAnchor="middle" fontSize={9} fontWeight={700} fill="#fff">
                 {i + 1}
               </text>
@@ -585,20 +600,20 @@ export function PlanView() {
       )}
       {showLegend && legend.length > 0 && (
         <div className="plan-legend" onMouseDown={(e) => e.stopPropagation()}>
-          <div className="plan-legend-title">Légende — {page.name}</div>
-          {legend.map(({ line, qty, n }) => (
+          <div className="plan-legend-title">
+            Légende {COLOR_MODE_LABELS[colorMode]} — {page.name}
+          </div>
+          {legend.map((e) => (
             <div
-              key={line.id}
-              className={`plan-legend-row${highlightArticleId === line.id ? ' on' : ''}`}
-              onClick={() => selectArticle(highlightArticleId === line.id ? null : line.id)}
-              title={`${n} mesure(s)`}
+              key={e.key}
+              className={`plan-legend-row${e.articleId && highlightArticleId === e.articleId ? ' on' : ''}`}
+              onClick={() => e.articleId && selectArticle(highlightArticleId === e.articleId ? null : e.articleId)}
+              title={`${e.n} mesure(s)`}
             >
-              <span className="swatch" style={{ background: line.color }} />
-              <span className="lg-code">{line.code}</span>
-              <span className="lg-des">{line.designation}</span>
-              <span className="lg-qty">
-                {fmt(qty)} {displayUnit(line.unit)}
-              </span>
+              <LegendSwatch color={e.color} kind={e.kind} symbol={e.symbol} />
+              {e.code && <span className="lg-code">{e.code}</span>}
+              <span className="lg-des">{e.label}</span>
+              <span className="lg-qty">{colorMode === 'article' ? `${fmt(e.qty)} ${e.unit}` : `${e.n} mes.`}</span>
             </div>
           ))}
         </div>
