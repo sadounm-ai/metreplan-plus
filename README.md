@@ -3,6 +3,8 @@
 Application web de **métré sur plans PDF** pour économistes de la construction, entièrement en français.
 Sa particularité : le métré est **piloté par la DPGF** et **contrôlé par rapport au CCTP**.
 
+![Aperçu : plan du RDC de la démo, article Dallage sélectionné et ses mesures surlignées](docs/apercu.png)
+
 ## Démarrage rapide
 
 Prérequis : **Node.js 22.13 ou plus récent** (la base SQLite utilise le module natif `node:sqlite`, aucune compilation n’est nécessaire).
