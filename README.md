@@ -21,7 +21,7 @@ dont deux erreurs volontaires pour illustrer l’analyse de cohérence). Le bout
 Production : `npm run build` puis `npm start` (l’interface est servie par l’API sur le port 3001).
 Les données sont stockées dans `data/` (base `metreplan.sqlite` et fichiers importés) ; modifiable avec `METREPLAN_DATA`.
 
-## Fonctions de cette première étape
+## Fonctions
 
 | Domaine | Contenu |
 | --- | --- |
@@ -32,13 +32,15 @@ Les données sont stockées dans `data/` (base `metreplan.sqlite` et fichiers im
 | Pilotage DPGF | Toute mesure est rattachée à un article ; **l’unité de l’article décide du calcul** (ml, m², m³, u) et l’outil conseillé est proposé ; paramètres hauteur, épaisseur, coefficient, % de chute, quantité par objet, par mesure ou par défaut pour l’article |
 | Panneau DPGF | Quantité métrée, quantité de la DPGF importée, PU modifiable, montant, sous-totaux par chapitre et par lot, total HT / TVA / TTC mis à jour à chaque clic |
 | Interface | Icônes dédiées pour chaque commande (barre d’outils, menus, panneaux) ; panneau DPGF redimensionnable à la souris (largeur mémorisée) et repliable pour agrandir la zone plan |
-| Calques | Création, affichage / masquage, verrouillage, couleur ; couleur par article ; légende automatique sur le plan ; couleur de fond réglable |
+| Calques et légende | Création, affichage / masquage, verrouillage, couleur ; **couleur des mesures par article, par outil ou par calque** ; symbole des objets comptés au choix par article (cercle, carré, triangle, losange, croix) ; légende automatique sur le plan, adaptée au mode de couleur ; couleur de fond réglable |
 | CCTP | Import PDF, extraction du texte, découpage en lot / chapitres / articles (en-têtes, pieds de page et sommaire ignorés), localisation, unité proposée |
 | DPGF | Import Excel (.xlsx) multi-lots (une feuille par lot), titres, groupes et sous-lignes, quantités, PU, taux de TVA ; ou **génération d’une DPGF vierge depuis le CCTP** |
 | Cohérence | Articles du CCTP absents de la DPGF, numérotation ou intitulés divergents, articles de DPGF non décrits au CCTP, articles sans mesure, mesures à l’unité incohérente (ex. m² mesuré à l’outil longueur), écarts métré / DPGF au-delà d’un seuil en %, pages mesurées sans échelle |
 | Traçabilité | Clic sur une ligne de DPGF : ses mesures sont surlignées et le plan correspondant s’ouvre ; clic sur une mesure : son article est sélectionné ; chaque mesure garde page, niveau, calque, outil, paramètres et date |
 
-Prochaine étape : tableaux de bord (avancement par lot, SHO / SP / SH, coût au m² SP, ratios) et exports Excel / PDF.
+| Tableau de bord | Montants HT / TTC, avancement du métré par lot, surfaces **SHO, SP, SH** par niveau et par pièce (surfaces E2 classées dans l’inspecteur), coût HT au m² SP et au m² SH, ratio SH / SP, quantités clés et € HT par m² SP |
+| Export Excel | Classeur à 4 onglets : **DPGF quantifiée et chiffrée** (montants, sous-totaux et HT / TVA / TTC en formules Excel), **détail des mesures avec leur origine** (plan, niveau, calque, outil, paramètres, calcul, date), **tableau de bord**, **cohérence** |
+| Export PDF | **Rapport de quantités par lot** avec récapitulatif, **tableau de bord et ratios**, **plans annotés** : les mesures sont dessinées sur la page PDF d’origine, avec une légende et les quantités |
 
 ## Raccourcis
 

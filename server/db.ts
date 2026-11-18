@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS dpgf_lines (
   id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   lot_id TEXT NOT NULL, kind TEXT NOT NULL, code TEXT NOT NULL, designation TEXT NOT NULL, depth INTEGER NOT NULL,
   unit TEXT NOT NULL, unit_price REAL, dpgf_qty REAL, manual_qty REAL, defaults_json TEXT NOT NULL DEFAULT '{}',
-  color TEXT NOT NULL DEFAULT '', cctp_ref TEXT, ord INTEGER NOT NULL DEFAULT 0
+  color TEXT NOT NULL DEFAULT '', cctp_ref TEXT, ord INTEGER NOT NULL DEFAULT 0, symbol TEXT
 );
 CREATE TABLE IF NOT EXISTS layers (
   id TEXT PRIMARY KEY, project_id TEXT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
@@ -77,6 +77,9 @@ export function openDb(file: string): DB {
   const db = new DatabaseSync(file);
   db.exec('PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;');
   db.exec(SCHEMA);
+  // Migrations des bases créées par une version antérieure
+  const cols = (db.prepare('PRAGMA table_info(dpgf_lines)').all() as { name: string }[]).map((c) => c.name);
+  if (!cols.includes('symbol')) db.exec('ALTER TABLE dpgf_lines ADD COLUMN symbol TEXT');
   return db;
 }
 
@@ -196,6 +199,7 @@ export function getProjectState(db: DB, id: string): ProjectState | null {
         defaults: j(r.defaults_json, {}),
         color: r.color as string,
         cctpRef: (r.cctp_ref as string | null) ?? undefined,
+        symbol: (r.symbol as DpgfLine['symbol'] | null) ?? undefined,
         order: r.ord as number,
       }),
     ),
@@ -269,7 +273,7 @@ export function saveProjectState(db: DB, id: string, s: EditableState) {
     const insLot = db.prepare('INSERT INTO lots (id, project_id, code, name, ord) VALUES (?, ?, ?, ?, ?)');
     for (const l of s.lots) insLot.run(l.id, id, l.code, l.name, l.order);
     const insLine = db.prepare(
-      'INSERT INTO dpgf_lines (id, project_id, lot_id, kind, code, designation, depth, unit, unit_price, dpgf_qty, manual_qty, defaults_json, color, cctp_ref, ord) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO dpgf_lines (id, project_id, lot_id, kind, code, designation, depth, unit, unit_price, dpgf_qty, manual_qty, defaults_json, color, cctp_ref, ord, symbol) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
     );
     for (const l of s.lines)
       insLine.run(
@@ -288,6 +292,7 @@ export function saveProjectState(db: DB, id: string, s: EditableState) {
         l.color,
         l.cctpRef ?? null,
         l.order,
+        l.symbol ?? null,
       );
     const insLayer = db.prepare('INSERT INTO layers (id, project_id, name, visible, locked, color, ord) VALUES (?, ?, ?, ?, ?, ?, ?)');
     for (const l of s.layers) insLayer.run(l.id, id, l.name, l.visible ? 1 : 0, l.locked ? 1 : 0, l.color, l.order);

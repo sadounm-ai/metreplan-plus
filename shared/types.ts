@@ -24,12 +24,22 @@ export interface ProjectSettings {
   ecartThreshold: number;
   /** Couleur de fond de la zone plan */
   planBackground: string;
+  /** Couleur des mesures à l'écran et dans les exports */
+  colorMode: ColorMode;
 }
+
+export type ColorMode = 'article' | 'outil' | 'calque';
+export const COLOR_MODE_LABELS: Record<ColorMode, string> = { article: 'par article', outil: 'par outil', calque: 'par calque' };
+
+/** Symbole des objets comptés (E4) */
+export type SymbolId = 'cercle' | 'carre' | 'triangle' | 'losange' | 'croix';
+export const SYMBOL_LABELS: Record<SymbolId, string> = { cercle: 'Cercle', carre: 'Carré', triangle: 'Triangle', losange: 'Losange', croix: 'Croix' };
 
 export const DEFAULT_SETTINGS: ProjectSettings = {
   tvaRate: 20,
   ecartThreshold: 10,
   planBackground: '#5b6470',
+  colorMode: 'article',
 };
 
 export type DocKind = 'plan' | 'cctp' | 'dpgf';
@@ -104,6 +114,8 @@ export interface DpgfLine {
   /** Paramètres par défaut appliqués aux nouvelles mesures */
   defaults: MeasureParams;
   color: string;
+  /** Symbole des objets comptés (E4) */
+  symbol?: SymbolId;
   /** Référence de l'article CCTP correspondant, si rapproché */
   cctpRef?: string;
   /** Quantité saisie manuellement (forfaits « ens », ajustements) */
