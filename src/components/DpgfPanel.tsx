@@ -1,7 +1,7 @@
 // Panneau DPGF latéral en temps réel : quantités métrées, prix, montants,
 // sous-totaux par chapitre et par lot, total HT / TVA / TTC.
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { articleTotals, recommendedTool, round, type ArticleTotals } from '../../shared/quantities';
 import type { DpgfLine } from '../../shared/types';
 import { displayUnit } from '../../shared/units';
@@ -49,7 +49,18 @@ export function DpgfPanel() {
   const { totals, sub, lotTotal, ht, tva, ttc, measuresByArticle } = useDpgfTotals();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
   const [q, setQ] = useState('');
-  const [showDpgfQty, setShowDpgfQty] = useState(true);
+  const [showDpgfQty, setShowDpgfQty] = useState(false);
+  // Panneau étroit : la colonne PU est masquée (modifiable dans la fiche article, double-clic)
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [wide, setWide] = useState(true);
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(() => setWide(el.clientWidth >= 500));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  const extra = (showDpgfQty ? 1 : 0) + (wide ? 1 : 0);
 
   const filter = q.trim().toLowerCase();
   const match = (l: DpgfLine) => !filter || l.designation.toLowerCase().includes(filter) || l.code.toLowerCase().includes(filter);
@@ -79,7 +90,7 @@ export function DpgfPanel() {
   }
 
   return (
-    <div className="dpgf">
+    <div className="dpgf" ref={rootRef}>
       <div className="dpgf-tools">
         <input className="search" placeholder="Rechercher un article…" value={q} onChange={(e) => setQ(e.target.value)} />
         <label className="chk" title="Afficher la quantité de la DPGF importée">
@@ -88,15 +99,24 @@ export function DpgfPanel() {
       </div>
       <div className="dpgf-scroll">
         <table className="dpgf-table">
+          <colgroup>
+            <col className="w-code" />
+            <col />
+            <col className="w-u" />
+            <col className="w-qty" />
+            {showDpgfQty && <col className="w-qty" />}
+            {wide && <col className="w-pu" />}
+            <col className="w-mt" />
+          </colgroup>
           <thead>
             <tr>
               <th className="c-code">N°</th>
               <th>Désignation</th>
               <th className="c-u">U</th>
-              <th className="c-num">Qté métrée</th>
+              <th className="c-num">Qté</th>
               {showDpgfQty && <th className="c-num">Qté DPGF</th>}
-              <th className="c-num">PU HT</th>
-              <th className="c-num">Montant HT</th>
+              {wide && <th className="c-num">PU HT</th>}
+              <th className="c-num">Montant</th>
             </tr>
           </thead>
           {data.lots.map((lot) => {
@@ -105,7 +125,7 @@ export function DpgfPanel() {
             return (
               <tbody key={lot.id}>
                 <tr className="row-lot" onClick={() => setCollapsed((c) => ({ ...c, [lot.id]: !c[lot.id] }))}>
-                  <td colSpan={showDpgfQty ? 6 : 5}>
+                  <td colSpan={4 + extra}>
                     <span className="caret">{isCol ? '▸' : '▾'}</span> Lot {lot.code} — {lot.name}
                   </td>
                   <td className="c-num">{money(lotTotal.get(lot.id) ?? 0)}</td>
@@ -117,8 +137,8 @@ export function DpgfPanel() {
                       return (
                         <tr key={l.id} className={`row-${l.kind}`} onDoubleClick={() => setUi({ dialog: { type: 'article', payload: l.id } })}>
                           <td className="c-code">{l.code}</td>
-                          <td colSpan={showDpgfQty ? 5 : 4} style={{ paddingLeft: 6 + l.depth * 10 }}>
-                            {l.designation}
+                          <td colSpan={3 + extra} style={{ paddingLeft: 6 + l.depth * 8 }} title={l.designation}>
+                            <div className="ellipsis">{l.designation}</div>
                           </td>
                           <td className="c-num sub">{sub.get(l.id) ? money(sub.get(l.id)!) : ''}</td>
                         </tr>
@@ -140,9 +160,11 @@ export function DpgfPanel() {
                           <span className="swatch" style={{ background: l.color }} />
                           {l.code}
                         </td>
-                        <td style={{ paddingLeft: 6 + l.depth * 10 }}>
+                        <td className="c-des" style={{ paddingLeft: 6 + l.depth * 8 }}>
                           <div className="des">
-                            <span className="des-text">{l.designation}</span>
+                            <span className="des-text" title={l.designation}>
+                              {l.designation}
+                            </span>
                             {t.incoherent > 0 && (
                               <span className="badge err" title="Mesure(s) à l’unité incohérente">
                                 ⚠ {t.incoherent}
@@ -170,19 +192,21 @@ export function DpgfPanel() {
                             {l.dpgfQty != null ? fmt(l.dpgfQty) : ''}
                           </td>
                         )}
-                        <td className="c-num" onClick={(e) => e.stopPropagation()}>
-                          <input
-                            className="pu"
-                            defaultValue={l.unitPrice != null ? fmt(l.unitPrice) : ''}
-                            key={`${l.id}-${l.unitPrice}`}
-                            placeholder="—"
-                            onBlur={(e) => {
-                              const v = parseNum(e.target.value);
-                              if (v !== l.unitPrice) updateLine(l.id, { unitPrice: v });
-                            }}
-                            onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
-                          />
-                        </td>
+                        {wide && (
+                          <td className="c-num c-pu" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              className="pu"
+                              defaultValue={l.unitPrice != null ? fmt(l.unitPrice) : ''}
+                              key={`${l.id}-${l.unitPrice}`}
+                              placeholder="—"
+                              onBlur={(e) => {
+                                const v = parseNum(e.target.value);
+                                if (v !== l.unitPrice) updateLine(l.id, { unitPrice: v });
+                              }}
+                              onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+                            />
+                          </td>
+                        )}
                         <td className="c-num">{t.amount ? money(t.amount) : ''}</td>
                       </tr>
                     );

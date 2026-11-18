@@ -11,9 +11,12 @@ import { DpgfPanel } from './DpgfPanel';
 import { MeasureInspector } from './MeasureInspector';
 import { PlanView } from './PlanView';
 import { LayersPanel, PagesPanel } from './SidePanels';
+import { Icon, type IconName } from './Icons';
+import { localStorageSafe } from '../store';
 
 interface MenuItem {
   label: string;
+  icon?: IconName;
   action?: () => void;
   shortcut?: string;
   disabled?: boolean;
@@ -51,6 +54,7 @@ function Menu({ label, items }: { label: string; items: MenuItem[] }) {
                 }}
               >
                 <span className="menu-check">{it.checked ? '✓' : ''}</span>
+                <span className="menu-ico">{it.icon ? Icon[it.icon]({ size: 16 }) : null}</span>
                 <span className="menu-label">{it.label}</span>
                 {it.shortcut && <span className="menu-kbd">{it.shortcut}</span>}
               </button>
@@ -62,7 +66,10 @@ function Menu({ label, items }: { label: string; items: MenuItem[] }) {
   );
 }
 
-const TOOL_ICONS: Record<ToolId, string> = { E1: '⬠', E2: '▰', E3: '╱', E4: '⊙' };
+const TOOL_ICONS: Record<ToolId, IconName> = { E1: 'perimetre', E2: 'surface', E3: 'longueur', E4: 'comptage' };
+
+const RIGHT_MIN = 320;
+const RIGHT_MAX = 760;
 
 export function Workspace({ onHome }: { onHome: () => void }) {
   const data = useApp((s) => s.data)!;
@@ -113,6 +120,34 @@ export function Workspace({ onHome }: { onHome: () => void }) {
   }, [s.activeArticleId]);
 
   const dlg = (type: string, payload?: unknown) => () => s.setUi({ dialog: { type, payload } });
+
+  // Largeur du panneau DPGF : réglable à la souris, mémorisée, repliable
+  const [rightW, setRightW] = useState(() => Number(localStorageSafe.get('metreplan:largeur-dpgf')) || 420);
+  const [rightOpen, setRightOpenState] = useState(() => localStorageSafe.get('metreplan:dpgf-replie') !== '1');
+  const setRightOpen = (v: boolean) => {
+    setRightOpenState(v);
+    localStorageSafe.set('metreplan:dpgf-replie', v ? '0' : '1');
+  };
+  const startResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const x0 = e.clientX;
+    const w0 = rightW;
+    let w = w0;
+    const move = (ev: MouseEvent) => {
+      w = Math.max(RIGHT_MIN, Math.min(RIGHT_MAX, w0 + x0 - ev.clientX));
+      setRightW(w);
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+      document.body.classList.remove('resizing');
+      localStorageSafe.set('metreplan:largeur-dpgf', String(Math.round(w)));
+    };
+    document.body.classList.add('resizing');
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+
   const firstLot = data.lots[0];
 
   return (
@@ -128,30 +163,30 @@ export function Workspace({ onHome }: { onHome: () => void }) {
           <Menu
             label="Fichier"
             items={[
-              { label: 'Projets…', action: onHome },
+              { label: 'Projets…', icon: 'maison', action: onHome },
               { sep: true, label: '' },
-              { label: 'Importer des plans PDF…', action: dlg('import-plans') },
-              { label: 'Importer un CCTP (PDF)…', action: dlg('import-cctp') },
-              { label: 'Importer une DPGF (Excel)…', action: dlg('import-dpgf') },
+              { label: 'Importer des plans PDF…', icon: 'plan', action: dlg('import-plans') },
+              { label: 'Importer un CCTP (PDF)…', icon: 'cctp', action: dlg('import-cctp') },
+              { label: 'Importer une DPGF (Excel)…', icon: 'tableur', action: dlg('import-dpgf') },
               { sep: true, label: '' },
-              { label: 'Paramètres du projet…', action: dlg('parametres') },
+              { label: 'Paramètres du projet…', icon: 'parametres', action: dlg('parametres') },
             ]}
           />
           <Menu
             label="Édition"
             items={[
-              { label: 'Annuler', shortcut: 'Ctrl+Z', action: s.undo, disabled: !s.past.length },
-              { label: 'Rétablir', shortcut: 'Ctrl+Y', action: s.redo, disabled: !s.future.length },
+              { label: 'Annuler', icon: 'annuler', shortcut: 'Ctrl+Z', action: s.undo, disabled: !s.past.length },
+              { label: 'Rétablir', icon: 'retablir', shortcut: 'Ctrl+Y', action: s.redo, disabled: !s.future.length },
               { sep: true, label: '' },
-              { label: 'Supprimer la mesure', shortcut: 'Suppr', disabled: !s.selectedMeasureId, action: () => s.selectedMeasureId && s.deleteMeasure(s.selectedMeasureId) },
+              { label: 'Supprimer la mesure', icon: 'corbeille', shortcut: 'Suppr', disabled: !s.selectedMeasureId, action: () => s.selectedMeasureId && s.deleteMeasure(s.selectedMeasureId) },
             ]}
           />
           <Menu
             label="Affichage"
             items={[
-              { label: 'Zoom avant', action: () => s.setUi({ zoomRequest: { factor: 1.25, n: s.zoomRequest.n + 1 } }) },
-              { label: 'Zoom arrière', action: () => s.setUi({ zoomRequest: { factor: 0.8, n: s.zoomRequest.n + 1 } }) },
-              { label: 'Ajuster à la fenêtre', action: () => s.setUi({ fitRequest: s.fitRequest + 1 }) },
+              { label: 'Zoom avant', icon: 'zoomPlus', action: () => s.setUi({ zoomRequest: { factor: 1.25, n: s.zoomRequest.n + 1 } }) },
+              { label: 'Zoom arrière', icon: 'zoomMoins', action: () => s.setUi({ zoomRequest: { factor: 0.8, n: s.zoomRequest.n + 1 } }) },
+              { label: 'Ajuster à la fenêtre', icon: 'ajuster', action: () => s.setUi({ fitRequest: s.fitRequest + 1 }) },
               { sep: true, label: '' },
               { label: 'Quantités sur le plan', checked: s.showQuantities, action: () => s.setUi({ showQuantities: !s.showQuantities }) },
               { label: 'Légende automatique', checked: s.showLegend, action: () => s.setUi({ showLegend: !s.showLegend }) },
@@ -161,26 +196,27 @@ export function Workspace({ onHome }: { onHome: () => void }) {
           <Menu
             label="Métré"
             items={[
-              { label: 'Sélection', shortcut: 'V', checked: s.tool === 'select', action: () => setTool('select') },
-              { label: 'Panoramique', shortcut: 'H', checked: s.tool === 'pan', action: () => setTool('pan') },
+              { label: 'Sélection', icon: 'select', shortcut: 'V', checked: s.tool === 'select', action: () => setTool('select') },
+              { label: 'Panoramique', icon: 'pan', shortcut: 'H', checked: s.tool === 'pan', action: () => setTool('pan') },
               { sep: true, label: '' },
-              ...(['E1', 'E2', 'E3', 'E4'] as ToolId[]).map((t, i) => ({ label: `${t} ${TOOL_LABELS[t]}`, shortcut: String(i + 1), checked: s.tool === t, action: () => setTool(t) })),
+              ...(['E1', 'E2', 'E3', 'E4'] as ToolId[]).map((t, i) => ({ label: `${t} ${TOOL_LABELS[t]}`, icon: TOOL_ICONS[t], shortcut: String(i + 1), checked: s.tool === t, action: () => setTool(t) })),
               { sep: true, label: '' },
-              { label: 'Échelle par cote connue', shortcut: 'K', disabled: !page, action: () => setTool('scale') },
+              { label: 'Échelle par cote connue', icon: 'echelle', shortcut: 'K', disabled: !page, action: () => setTool('scale') },
               { label: 'Échelle normalisée…', disabled: !page, action: dlg('echelle', { pageId: page?.id }) },
               { label: 'Détecter l’échelle (cartouche)', disabled: !page, action: detectScale },
               { sep: true, label: '' },
-              { label: 'Accrochage aux extrémités', shortcut: 'S', checked: s.snap, action: () => s.setUi({ snap: !s.snap }) },
+              { label: 'Accrochage aux extrémités', icon: 'accroche', shortcut: 'S', checked: s.snap, action: () => s.setUi({ snap: !s.snap }) },
             ]}
           />
           <Menu
             label="DPGF"
             items={[
-              { label: 'Importer une DPGF (Excel)…', action: dlg('import-dpgf') },
+              { label: 'Importer une DPGF (Excel)…', icon: 'tableur', action: dlg('import-dpgf') },
               { label: 'Générer une DPGF depuis le CCTP…', disabled: !data.cctp.length, action: dlg('generer-dpgf') },
               { sep: true, label: '' },
               {
                 label: 'Ajouter un article',
+                icon: 'plus',
                 action: () => {
                   const lotId = (activeLine?.lotId ?? firstLot?.id) || s.addLot('01', 'Nouveau lot');
                   const id = s.addLine(lotId, s.activeArticleId);
@@ -194,7 +230,7 @@ export function Workspace({ onHome }: { onHome: () => void }) {
           <Menu
             label="Analyse"
             items={[
-              { label: `Cohérence plans / CCTP / DPGF (${issues.length})`, action: dlg('coherence') },
+              { label: `Cohérence plans / CCTP / DPGF (${issues.length})`, icon: 'coherence', action: dlg('coherence') },
               { label: 'Tableau de bord et ratios (étape suivante)', disabled: true },
             ]}
           />
@@ -205,7 +241,7 @@ export function Workspace({ onHome }: { onHome: () => void }) {
               { label: 'Rapport de quantités (PDF) — étape suivante', disabled: true },
             ]}
           />
-          <Menu label="Aide" items={[{ label: 'Raccourcis et principes', action: dlg('aide') }]} />
+          <Menu label="Aide" items={[{ label: 'Raccourcis et principes', icon: 'aide', action: dlg('aide') }]} />
         </nav>
         <div className="project-title" title={data.project.address}>
           <strong>{data.project.name}</strong> <span className="tag">{data.project.phase}</span>
@@ -218,10 +254,10 @@ export function Workspace({ onHome }: { onHome: () => void }) {
       <div className="toolbar">
         <div className="tb-group">
           <button className={`tb${s.tool === 'select' ? ' on' : ''}`} onClick={() => setTool('select')} title="Sélection (V)">
-            ⬉ <span>Sélection</span>
+            <Icon.select /> <span>Sélection</span>
           </button>
           <button className={`tb${s.tool === 'pan' ? ' on' : ''}`} onClick={() => setTool('pan')} title="Panoramique (H, ou Espace maintenu)">
-            ✋ <span>Pan.</span>
+            <Icon.pan /> <span>Panoramique</span>
           </button>
         </div>
         <div className="tb-group">
@@ -230,26 +266,27 @@ export function Workspace({ onHome }: { onHome: () => void }) {
               key={t}
               className={`tb tool${s.tool === t ? ' on' : ''}${activeLine && recommendedTool(activeLine.unit) === t ? ' reco' : ''}`}
               onClick={() => setTool(t)}
-              title={`${t} ${TOOL_LABELS[t]} (${i + 1})`}
+              title={`${t} ${TOOL_LABELS[t]} (${i + 1})${activeLine && recommendedTool(activeLine.unit) === t ? ' — outil conseillé pour l’article actif' : ''}`}
             >
-              <b>{t}</b> {TOOL_ICONS[t]} <span>{TOOL_LABELS[t]}</span>
+              {Icon[TOOL_ICONS[t]]({})}
+              <b>{t}</b> <span>{TOOL_LABELS[t]}</span>
             </button>
           ))}
         </div>
         <div className="tb-group">
           <button className={`tb${s.tool === 'scale' ? ' on' : ''}`} onClick={() => setTool('scale')} disabled={!page} title="Échelle par cote connue (K)">
-            📏 <span>Échelle</span>
+            <Icon.echelle /> <span>Échelle</span>
           </button>
           <button className={`tb${s.snap ? ' on' : ''}`} onClick={() => s.setUi({ snap: !s.snap })} title="Accrochage aux extrémités (S)">
-            ⌖ <span>Accroche</span>
+            <Icon.accroche /> <span>Accroche</span>
           </button>
         </div>
         <div className="tb-group">
           <button className="tb" onClick={s.undo} disabled={!s.past.length} title="Annuler (Ctrl+Z)">
-            ↶
+            <Icon.annuler />
           </button>
           <button className="tb" onClick={s.redo} disabled={!s.future.length} title="Rétablir (Ctrl+Y)">
-            ↷
+            <Icon.retablir />
           </button>
         </div>
         <div className="tb-active">
@@ -266,11 +303,14 @@ export function Workspace({ onHome }: { onHome: () => void }) {
           )}
         </div>
         <button className={`tb coh${errors ? ' bad' : ''}`} onClick={dlg('coherence')} title="Analyse de cohérence">
-          {errors ? `⚠ ${errors} erreur(s)` : '✓ Cohérence'} · {issues.length}
+          {errors ? <Icon.alerte /> : <Icon.coherence />} <span>{errors ? `${errors} erreur(s)` : 'Cohérence'} · {issues.length}</span>
+        </button>
+        <button className={`tb${rightOpen ? ' on' : ''}`} onClick={() => setRightOpen(!rightOpen)} title={rightOpen ? 'Replier le panneau DPGF' : 'Afficher le panneau DPGF'}>
+          <Icon.panneauDroit />
         </button>
       </div>
 
-      <main className="main">
+      <main className="main" style={{ gridTemplateColumns: `var(--left-w) 1fr ${rightOpen ? `${rightW}px` : '0px'}` }}>
         <aside className="left">
           <PagesPanel />
           <LayersPanel />
@@ -278,12 +318,20 @@ export function Workspace({ onHome }: { onHome: () => void }) {
         <section className="center">
           <PlanView />
         </section>
-        <aside className="right">
+        <aside className={`right${rightOpen ? '' : ' closed'}`}>
+          {rightOpen && <div className="resizer" onMouseDown={startResize} title="Glisser pour élargir ou réduire le panneau DPGF" />}
           <div className="panel-head">
-            <span>DPGF — {data.lots.length} lot(s)</span>
-            <button className="mini" onClick={dlg('import-dpgf')}>
-              Importer
-            </button>
+            <span className="head-ico">
+              <Icon.tableur size={15} /> DPGF — {data.lots.length} lot(s)
+            </span>
+            <span className="row">
+              <button className="mini" onClick={dlg('import-dpgf')} title="Importer une DPGF Excel">
+                Importer
+              </button>
+              <button className="icon" onClick={() => setRightOpen(false)} title="Replier le panneau DPGF">
+                <Icon.fermer size={14} />
+              </button>
+            </span>
           </div>
           <DpgfPanel />
           <MeasureInspector />

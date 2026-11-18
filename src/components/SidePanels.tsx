@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { loadDocument } from '../pdf';
 import { useApp } from '../store';
+import { Icon } from './Icons';
 
 function Thumb({ docId, pageIndex }: { docId: string; pageIndex: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -40,9 +41,11 @@ export function PagesPanel() {
   return (
     <div className="panel">
       <div className="panel-head">
-        <span>Plans ({pages.length})</span>
+        <span className="head-ico">
+          <Icon.plan size={15} /> Plans ({pages.length})
+        </span>
         <button className="mini" title="Importer des plans PDF" onClick={() => setUi({ dialog: { type: 'import-plans' } })}>
-          + PDF
+          <Icon.plus size={12} /> PDF
         </button>
       </div>
       <div className="pages">
@@ -104,19 +107,21 @@ export function LayersPanel() {
   return (
     <div className="panel">
       <div className="panel-head">
-        <span>Calques</span>
+        <span className="head-ico">
+          <Icon.calques size={15} /> Calques
+        </span>
         <button className="mini" onClick={() => addLayer(`Calque ${data.layers.length + 1}`)}>
-          + Calque
+          <Icon.plus size={12} /> Calque
         </button>
       </div>
       <div className="layers">
         {data.layers.map((l) => (
           <div key={l.id} className={`layer${l.id === activeLayerId ? ' on' : ''}`} onClick={() => setUi({ activeLayerId: l.id })} title="Calque actif pour les nouvelles mesures">
             <button className="icon" title={l.visible ? 'Masquer' : 'Afficher'} onClick={(e) => (e.stopPropagation(), updateLayer(l.id, { visible: !l.visible }))}>
-              {l.visible ? '👁' : '—'}
+              {l.visible ? <Icon.oeil size={15} /> : <Icon.oeilBarre size={15} />}
             </button>
             <button className="icon" title={l.locked ? 'Déverrouiller' : 'Verrouiller'} onClick={(e) => (e.stopPropagation(), updateLayer(l.id, { locked: !l.locked }))}>
-              {l.locked ? '🔒' : '🔓'}
+              {l.locked ? <Icon.cadenas size={15} /> : <Icon.cadenasOuvert size={15} />}
             </button>
             <input type="color" value={l.color} onClick={(e) => e.stopPropagation()} onChange={(e) => updateLayer(l.id, { color: e.target.value })} title="Couleur du calque" />
             {editing === l.id ? (
@@ -143,7 +148,7 @@ export function LayersPanel() {
                   deleteLayer(l.id);
                 }}
               >
-                ✕
+                <Icon.corbeille size={14} />
               </button>
             )}
           </div>

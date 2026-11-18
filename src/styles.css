@@ -348,7 +348,7 @@ kbd {
 .main {
   flex: 1;
   display: grid;
-  grid-template-columns: 240px 1fr 600px;
+  grid-template-columns: var(--left-w) 1fr 430px;
   min-height: 0;
 }
 .left,
@@ -524,14 +524,14 @@ kbd {
 .plan-hint {
   position: absolute;
   left: 50%;
-  top: 10px;
+  bottom: 44px;
   transform: translateX(-50%);
   background: rgba(16, 40, 61, 0.9);
   color: #fff;
   padding: 6px 12px;
   border-radius: 16px;
   font-size: 12px;
-  max-width: 90%;
+  max-width: calc(100% - 40px);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1165,9 +1165,124 @@ legend {
 
 @media (max-width: 1280px) {
   .main {
-    grid-template-columns: 200px 1fr 500px;
+
   }
   .tb span {
     display: none;
   }
+}
+
+/* --- Icônes et panneau DPGF redimensionnable --- */
+:root {
+  --left-w: 220px;
+}
+body.resizing,
+body.resizing * {
+  cursor: col-resize !important;
+  user-select: none;
+}
+.right {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+}
+.right.closed {
+  border-left: none;
+}
+.resizer {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 5;
+}
+.resizer:hover {
+  background: linear-gradient(90deg, var(--accent) 2px, transparent 2px);
+}
+.tb {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.tb svg {
+  flex: none;
+}
+.tb.tool b {
+  font-size: 10.5px;
+  margin-left: -1px;
+}
+.menu-ico {
+  width: 22px;
+  display: inline-flex;
+  color: #4b5563;
+}
+.menu-item:disabled .menu-ico {
+  opacity: 0.45;
+}
+.head-ico {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.mini,
+.icon,
+.btn,
+.plan-zoom button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.icon {
+  color: #4b5563;
+}
+.c-des {
+  max-width: 0;
+  width: 100%;
+}
+.des-text,
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 1280px) {
+  :root {
+    --left-w: 190px;
+  }
+}
+.dpgf-table {
+  table-layout: fixed;
+}
+.w-code {
+  width: 88px;
+}
+.w-u {
+  width: 30px;
+}
+.w-qty {
+  width: 64px;
+}
+.w-pu {
+  width: 70px;
+}
+.w-mt {
+  width: 88px;
+}
+.dpgf-table .c-code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10.5px;
+}
+.row-lot td,
+.row-titre td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.c-des {
+  max-width: none;
+  width: auto;
 }

@@ -6,6 +6,7 @@ import { TOOL_LABELS, type MeasureParams, type SurfaceTag } from '../../shared/t
 import { displayUnit, unitDimension } from '../../shared/units';
 import { fmt, parseNum } from '../format';
 import { useApp } from '../store';
+import { Icon } from './Icons';
 
 const PARAMS: { key: keyof MeasureParams; label: string; unit: string }[] = [
   { key: 'hauteur', label: 'Hauteur', unit: 'm' },
@@ -56,7 +57,7 @@ export function MeasureInspector() {
           Mesure {m.tool} — {TOOL_LABELS[m.tool]}
         </span>
         <button className="icon" title="Fermer" onClick={() => setUi({ selectedMeasureId: null })}>
-          ✕
+          <Icon.fermer size={14} />
         </button>
       </div>
       <div className="insp-body">
@@ -144,7 +145,7 @@ export function MeasureInspector() {
         <div className="insp-actions">
           {m.tool === 'E2' && (
             <button className="btn" onClick={() => setUi({ holeMode: true, tool: 'E2' })} title="Tracer un contour à déduire (trémie, gaine, trou)">
-              Déduire un trou
+              <Icon.trou size={15} /> Déduire un trou
             </button>
           )}
           {m.holes.length > 0 && (
@@ -153,7 +154,7 @@ export function MeasureInspector() {
             </button>
           )}
           <button className="btn danger" onClick={() => deleteMeasure(m.id)}>
-            Supprimer
+            <Icon.corbeille size={15} /> Supprimer
           </button>
         </div>
       </div>

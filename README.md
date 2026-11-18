@@ -31,6 +31,7 @@ Les données sont stockées dans `data/` (base `metreplan.sqlite` et fichiers im
 | Outils | E1 Périmètre, E2 Surface avec trous / trémies déduits, E3 Longueur, E4 Comptage ; zoom molette, panoramique, accrochage aux extrémités des tracés du PDF et des mesures, mode orthogonal (Maj), annuler / rétablir, déplacement des sommets |
 | Pilotage DPGF | Toute mesure est rattachée à un article ; **l’unité de l’article décide du calcul** (ml, m², m³, u) et l’outil conseillé est proposé ; paramètres hauteur, épaisseur, coefficient, % de chute, quantité par objet, par mesure ou par défaut pour l’article |
 | Panneau DPGF | Quantité métrée, quantité de la DPGF importée, PU modifiable, montant, sous-totaux par chapitre et par lot, total HT / TVA / TTC mis à jour à chaque clic |
+| Interface | Icônes dédiées pour chaque commande (barre d’outils, menus, panneaux) ; panneau DPGF redimensionnable à la souris (largeur mémorisée) et repliable pour agrandir la zone plan |
 | Calques | Création, affichage / masquage, verrouillage, couleur ; couleur par article ; légende automatique sur le plan ; couleur de fond réglable |
 | CCTP | Import PDF, extraction du texte, découpage en lot / chapitres / articles (en-têtes, pieds de page et sommaire ignorés), localisation, unité proposée |
 | DPGF | Import Excel (.xlsx) multi-lots (une feuille par lot), titres, groupes et sous-lignes, quantités, PU, taux de TVA ; ou **génération d’une DPGF vierge depuis le CCTP** |

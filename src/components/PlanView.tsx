@@ -10,6 +10,7 @@ import { displayUnit } from '../../shared/units';
 import { loadDocument, vectorSnapIndex, type SnapIndex } from '../pdf';
 import { useApp } from '../store';
 import { fmt } from '../format';
+import { Icon } from './Icons';
 
 interface View {
   tx: number;
@@ -603,10 +604,16 @@ export function PlanView() {
         </div>
       )}
       <div className="plan-zoom" onMouseDown={(e) => e.stopPropagation()}>
-        <button title="Zoom arrière" onClick={() => zoomAt(1 / 1.25)}>−</button>
+        <button title="Zoom arrière" onClick={() => zoomAt(1 / 1.25)}>
+          <Icon.zoomMoins size={16} />
+        </button>
         <span>{Math.round(z * 100)} %</span>
-        <button title="Zoom avant" onClick={() => zoomAt(1.25)}>+</button>
-        <button title="Ajuster à la fenêtre" onClick={fit}>⤢</button>
+        <button title="Zoom avant" onClick={() => zoomAt(1.25)}>
+          <Icon.zoomPlus size={16} />
+        </button>
+        <button title="Ajuster à la fenêtre" onClick={fit}>
+          <Icon.ajuster size={16} />
+        </button>
       </div>
       <div className="plan-coords">
         {page.scale ? `Échelle ${page.scale.label}` : 'Échelle non définie'}
