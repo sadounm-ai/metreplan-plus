@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { PHASES, type Phase, type ProjectSummary } from '../../shared/types';
 import { api } from '../api';
+import { BrandEmblem, BrandLogo } from './Brand';
 import { Modal } from './Dialogs';
 import { Toasts } from './Workspace';
 import { useApp } from '../store';
@@ -25,13 +26,16 @@ export function Home({ onOpen }: { onOpen: (id: string) => void }) {
   return (
     <div className="home">
       <header className="home-head">
-        <div className="brand big">
-          <span className="logo">M+</span>
-          <span>
-            MétréPlan<b>+</b>
-          </span>
+        <div>
+          <div className="brand big">
+            <span className="logo">M+</span>
+            <span>
+              MétréPlan<b>+</b>
+            </span>
+          </div>
+          <p>Métré sur plans PDF piloté par la DPGF et contrôlé par le CCTP.</p>
         </div>
-        <p>Métré sur plans PDF piloté par la DPGF et contrôlé par le CCTP.</p>
+        <BrandLogo height={72} />
       </header>
       <div className="home-actions">
         <button className="btn primary" onClick={() => setCreating(true)}>
@@ -126,6 +130,12 @@ export function Home({ onOpen }: { onOpen: (id: string) => void }) {
           </label>
         </Modal>
       )}
+      <footer className="home-foot">
+        <BrandEmblem size={28} />
+        <span>
+          Conçu par <strong>MSBIM5D</strong> — Mourad SADOUN, ingénieur économiste, formateur
+        </span>
+      </footer>
       <Toasts />
     </div>
   );

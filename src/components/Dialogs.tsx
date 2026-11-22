@@ -13,6 +13,7 @@ import { api } from '../api';
 import { fmt, parseNum } from '../format';
 import { detectScaleRatio, metersPerPointForRatio, openLocalPdf, pageText, registerLocalDocument } from '../pdf';
 import { useApp } from '../store';
+import { BrandEmblem } from './Brand';
 import { DashboardDialog } from './Dashboard';
 import { ExportDialog } from './Exports';
 import { LegendSwatch } from './PlanView';
@@ -22,7 +23,10 @@ export function Modal({ title, children, onClose, wide, footer }: { title: strin
     <div className="modal-back" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className={`modal${wide ? ' wide' : ''}`} role="dialog" aria-label={title}>
         <div className="modal-head">
-          <h3>{title}</h3>
+          <h3>
+            <BrandEmblem size={22} />
+            {title}
+          </h3>
           <button className="icon" onClick={onClose} aria-label="Fermer">
             ✕
           </button>
