@@ -1,7 +1,7 @@
 // Export PDF : rapport de quantités par lot, tableau de bord et ratios,
 // plans annotés (mesures dessinées sur les pages d'origine) avec légende.
 
-import { LineCapStyle, PDFDocument, StandardFonts, degrees, rgb, type PDFFont, type PDFPage, type RGB } from 'pdf-lib';
+import { LineCapStyle, PDFDocument, StandardFonts, degrees, rgb, type PDFFont, type PDFImage, type PDFPage, type RGB } from 'pdf-lib';
 import { buildDashboard } from './dashboard';
 import { buildLegend, measureColor, symbolPath, type LegendEntry } from './display';
 import { centroid, polygonArea } from './geometry';
@@ -18,6 +18,8 @@ export interface PdfExportOptions {
   plans: string[];
   /** Lecture du PDF d'origine d'un document de plans */
   loadDocument: (docId: string) => Promise<Uint8Array | ArrayBuffer>;
+  /** Logo PNG de l'auteur (MSBIM5D), placé en en-tête des pages et dans la légende des plans */
+  logo?: Uint8Array | ArrayBuffer;
 }
 
 // --- Utilitaires -------------------------------------------------------------
@@ -94,6 +96,7 @@ class Report {
   page!: PDFPage;
   y = 0;
   pages: PDFPage[] = [];
+  logo?: PDFImage;
   constructor(
     private doc: PDFDocument,
     private f: PDFFont,
@@ -105,7 +108,10 @@ class Report {
     this.page = this.doc.addPage(A4);
     this.pages.push(this.page);
     this.y = A4[1] - M;
-    this.text(this.title, M, this.y - 8, 8, { color: MUTED });
+    const lh = 20;
+    const lw = this.logo ? (this.logo.width * lh) / this.logo.height : 0;
+    if (this.logo) this.page.drawImage(this.logo, { x: A4[0] - M - lw, y: this.y - 11, width: lw, height: lh });
+    this.text(this.title, M, this.y - 8, 8, { color: MUTED, w: A4[0] - 2 * M - lw - 10 });
     this.page.drawLine({ start: { x: M, y: this.y - 13 }, end: { x: A4[0] - M, y: this.y - 13 }, thickness: 0.5, color: RULE });
     this.y -= 30;
   }
@@ -205,7 +211,9 @@ export async function exportPdf(d: Data, o: PdfExportOptions): Promise<Uint8Arra
   const db = buildDashboard(d);
   const date = new Date().toLocaleDateString('fr-FR');
   const sub = [d.project.address, `Phase ${d.project.phase}`, `Édité le ${date}`].filter(Boolean).join(' — ');
+  const logo = o.logo ? await doc.embedPng(o.logo) : undefined;
   const R = new Report(doc, f, b, `${d.project.name} — ${sub}`);
+  R.logo = logo;
 
   if (o.rapport) {
     R.newPage();
@@ -384,8 +392,10 @@ export async function exportPdf(d: Data, o: PdfExportOptions): Promise<Uint8Arra
       TOOL_LABELS,
     );
     const ls = fs * 0.8;
+    const logoW = inner * 0.62;
+    const logoH = logo ? (logoW * logo.height) / logo.width : 0;
     for (const e of legend) {
-      if (y < pad * 3) {
+      if (y < pad * 3 + logoH + pad) {
         tx('… (suite dans le rapport)', x0 + pad, ls, { color: MUTED });
         break;
       }
@@ -402,6 +412,7 @@ export async function exportPdf(d: Data, o: PdfExportOptions): Promise<Uint8Arra
       y -= ls * 1.7;
     }
     if (!legend.length) tx('Aucune mesure sur ce plan.', x0 + pad, ls, { color: MUTED });
+    if (logo) out.drawImage(logo, { x: x0 + pad, y: pad * 2.4, width: logoW, height: logoH });
     y = pad * 1.2;
     tx(`MétréPlan+ — ${date}`, x0 + pad, fs * 0.7, { color: MUTED });
   }

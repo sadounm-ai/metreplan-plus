@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import { api } from '../api';
 import { useApp } from '../store';
+import { LOGO_URL } from './Brand';
 import { Modal } from './Dialogs';
 
 const close = () => useApp.getState().setUi({ dialog: null });
@@ -27,6 +28,19 @@ function download(data: BlobPart, name: string, type: string) {
   setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
+/** Logo MSBIM5D pour les exports ; l'export se fait sans logo s'il est introuvable */
+async function loadLogo() {
+  try {
+    const r = await fetch(LOGO_URL);
+    if (!r.ok) return undefined;
+    const png = new Uint8Array(await r.arrayBuffer());
+    const bmp = await createImageBitmap(new Blob([png], { type: 'image/png' }));
+    return { png, width: bmp.width, height: bmp.height };
+  } catch {
+    return undefined;
+  }
+}
+
 export function ExportDialog({ kind }: { kind: 'xlsx' | 'pdf' }) {
   const data = useApp((s) => s.data)!;
   const { toast } = useApp.getState();
@@ -40,15 +54,17 @@ export function ExportDialog({ kind }: { kind: 'xlsx' | 'pdf' }) {
   const run = async () => {
     setBusy(true);
     try {
+      const logo = await loadLogo();
       if (kind === 'xlsx') {
         const { exportXlsx } = await import('../../shared/exportXlsx');
-        const buf = await exportXlsx(data);
+        const buf = await exportXlsx(data, { logo });
         download(buf, `${base}_DPGF_metre.xlsx`, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
       } else {
         const { exportPdf } = await import('../../shared/exportPdf');
         const bytes = await exportPdf(data, {
           rapport,
           ratios,
+          logo: logo?.png,
           plans: data.pages.filter((p) => plans.has(p.id)).map((p) => p.id),
           loadDocument: async (docId) => {
             const r = await fetch(api.documentUrl(docId));

@@ -1,5 +1,6 @@
 // Espace de travail : menu principal, barre d'outils, panneaux et zone plan.
 
+import { BrandLogo } from './Brand';
 import { useEffect, useRef, useState } from 'react';
 import { recommendedTool } from '../../shared/quantities';
 import { COLOR_MODE_LABELS, TOOL_LABELS, type ColorMode, type ToolId } from '../../shared/types';
@@ -251,6 +252,9 @@ export function Workspace({ onHome }: { onHome: () => void }) {
         </div>
         <div className={`save-state ${s.saving}`}>
           {s.saving === 'idle' ? 'Enregistré' : s.saving === 'error' ? 'Erreur d’enregistrement' : 'Enregistrement…'}
+        </div>
+        <div className="topbar-sign">
+          <BrandLogo height={24} />
         </div>
       </header>
 

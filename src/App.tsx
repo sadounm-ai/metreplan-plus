@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { BrandLogo } from './components/Brand';
 import { Home } from './components/Home';
 import { Workspace } from './components/Workspace';
 import { useApp } from './store';
@@ -28,6 +29,13 @@ export function App() {
   }, [projectId]);
 
   if (!projectId) return <Home onOpen={(id) => (location.hash = `#/projet/${id}`)} />;
-  if (!data || data.project.id !== projectId) return <div className="loading-screen">Ouverture du projet…</div>;
+  if (!data || data.project.id !== projectId) return (
+      <div className="loading-screen">
+        <div>
+          <BrandLogo height={90} />
+          <p>Ouverture du projet…</p>
+        </div>
+      </div>
+    );
   return <Workspace onHome={() => (location.hash = '')} />;
 }

@@ -63,4 +63,26 @@ describe('exports', () => {
     expect(last.getWidth()).toBeGreaterThan(last.getHeight());
     if (process.env.MP_EXPORT_DIR) writeFileSync(join(process.env.MP_EXPORT_DIR, 'demo.pdf'), bytes);
   });
+
+  it('place le logo MSBIM5D dans les exports Excel et PDF', async () => {
+    const { db, s } = await demo();
+    const png = readFileSync(join(__dirname, '../public/marque/msbim5d.png'));
+    const buf = await exportXlsx(s, { logo: { png, width: 900, height: 286 } });
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.load(buf);
+    expect(wb.worksheets.every((w) => w.getImages().length === 1)).toBe(true);
+    const bytes = await exportPdf(s, {
+      rapport: true,
+      ratios: false,
+      plans: [s.pages[0].id],
+      logo: png,
+      loadDocument: async (docId) => readFileSync(getDocumentPath(db, docId)!.path),
+    });
+    const sans = await exportPdf(s, { rapport: true, ratios: false, plans: [s.pages[0].id], loadDocument: async (docId) => readFileSync(getDocumentPath(db, docId)!.path) });
+    expect(bytes.length).toBeGreaterThan(sans.length + 20_000);
+    if (process.env.MP_EXPORT_DIR) {
+      writeFileSync(join(process.env.MP_EXPORT_DIR, 'demo-logo.xlsx'), Buffer.from(buf));
+      writeFileSync(join(process.env.MP_EXPORT_DIR, 'demo-logo.pdf'), bytes);
+    }
+  });
 });

@@ -18,6 +18,37 @@ const QTY = '#,##0.00;-#,##0.00;""';
 const thin = { style: 'thin' as const, color: { argb: 'FFDDE1E7' } };
 const border = { top: thin, bottom: thin, left: thin, right: thin };
 
+export interface XlsxExportOptions {
+  /** Logo PNG de l'auteur (MSBIM5D), placé à droite de l'en-tête de chaque feuille */
+  logo?: { png: Uint8Array | ArrayBuffer; width: number; height: number };
+}
+
+function toBase64(bytes: Uint8Array) {
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+
+/** Largeur approximative d'une colonne Excel en pixels */
+const colPx = (w: number | undefined) => Math.round((w ?? 9) * 7 + 5);
+
+function placeLogo(ws: ExcelJS.Worksheet, imageId: number | undefined, size: { width: number; height: number } | undefined, cols: number) {
+  if (imageId == null || !size) return;
+  const h = 40;
+  const w = (size.width * h) / size.height;
+  // Ancre la fin du logo sur le bord droit de la dernière colonne de l'en-tête
+  let px = w + 4;
+  let col = cols;
+  while (col > 0 && px > colPx(ws.getColumn(col).width)) {
+    px -= colPx(ws.getColumn(col).width);
+    col--;
+  }
+  const c0 = Math.max(0, col - px / colPx(ws.getColumn(Math.max(1, col)).width));
+  ws.getRow(1).height = 22;
+  ws.getRow(2).height = 18;
+  ws.addImage(imageId, { tl: { col: c0, row: 0.1 }, ext: { width: w, height: h }, editAs: 'oneCell' } as never);
+}
+
 function head(ws: ExcelJS.Worksheet, d: Data, title: string, cols: number) {
   ws.mergeCells(1, 1, 1, cols);
   const c = ws.getCell(1, 1);
@@ -41,8 +72,10 @@ function headerRow(ws: ExcelJS.Worksheet, row: number, labels: string[]) {
   r.height = 22;
 }
 
-export async function exportXlsx(d: Data): Promise<ArrayBuffer> {
+export async function exportXlsx(d: Data, opts: XlsxExportOptions = {}): Promise<ArrayBuffer> {
   const wb = new ExcelJS.Workbook();
+  const logoId = opts.logo ? wb.addImage({ base64: toBase64(new Uint8Array(opts.logo.png)), extension: 'png' }) : undefined;
+  const logo = (ws: ExcelJS.Worksheet, cols: number) => placeLogo(ws, logoId, opts.logo, cols);
   wb.creator = 'MétréPlan+';
   wb.created = new Date();
   wb.calcProperties.fullCalcOnLoad = true;
@@ -55,6 +88,7 @@ export async function exportXlsx(d: Data): Promise<ArrayBuffer> {
   const ws = wb.addWorksheet('DPGF chiffrée', { views: [{ state: 'frozen', ySplit: 4 }], pageSetup: { orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 0, paperSize: 9 } });
   ws.columns = [{ width: 16 }, { width: 60 }, { width: 7 }, { width: 13 }, { width: 13 }, { width: 13 }, { width: 16 }];
   head(ws, d, 'DPGF quantifiée et chiffrée', 7);
+  logo(ws, 7);
   headerRow(ws, 4, ['N°', 'Désignation', 'U', 'Qté métrée', 'Qté DPGF', 'PU HT', 'Montant HT']);
   let r = 5;
   const lotTotalCells: string[] = [];
@@ -126,6 +160,7 @@ export async function exportXlsx(d: Data): Promise<ArrayBuffer> {
   const cols = ['Lot', 'N° article', 'Désignation', 'U', 'Plan', 'Niveau', 'Calque', 'Outil', 'Libellé', 'Pièce', 'Longueur (m)', 'Surface (m²)', 'Nombre', 'Hauteur', 'Épaisseur', 'Coef.', 'Chute %', 'Qté / objet', 'Quantité retenue', 'Statut', 'Calcul', 'Saisie le'];
   wm.columns = [6, 14, 40, 6, 24, 10, 14, 14, 22, 14, 12, 12, 9, 9, 9, 7, 8, 10, 14, 12, 50, 18].map((width) => ({ width }));
   head(wm, d, 'Détail des mesures par article', cols.length);
+  logo(wm, 9);
   headerRow(wm, 4, cols);
   r = 5;
   const sorted = [...d.measures].sort((a, b) => (lines.get(a.articleId)?.order ?? 0) - (lines.get(b.articleId)?.order ?? 0) || a.createdAt.localeCompare(b.createdAt));
@@ -170,6 +205,7 @@ export async function exportXlsx(d: Data): Promise<ArrayBuffer> {
   const wd = wb.addWorksheet('Tableau de bord');
   wd.columns = [{ width: 44 }, { width: 18 }, { width: 18 }, { width: 18 }, { width: 18 }];
   head(wd, d, 'Tableau de bord', 5);
+  logo(wd, 5);
   r = 4;
   const kv = (k: string, v: number | string | null, fmt?: string) => {
     const row = wd.getRow(r++);
@@ -224,6 +260,7 @@ export async function exportXlsx(d: Data): Promise<ArrayBuffer> {
   const wc = wb.addWorksheet('Cohérence');
   wc.columns = [{ width: 42 }, { width: 10 }, { width: 110 }];
   head(wc, d, 'Analyse de cohérence plans / CCTP / DPGF', 3);
+  logo(wc, 3);
   headerRow(wc, 4, ['Contrôle', 'Gravité', 'Détail']);
   issues.forEach((i, n) => {
     wc.getRow(5 + n).values = [ISSUE_LABELS[i.kind], i.severity, i.message];
