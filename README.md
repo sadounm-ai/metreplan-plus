@@ -7,6 +7,8 @@ Sa particularité : le métré est **piloté par la DPGF** et **contrôlé par r
 
 ## Démarrage rapide
 
+Guide pas à pas pour non-informaticiens (Windows, macOS, Linux, mise à jour, dépannage) : **[docs/INSTALLATION.md](docs/INSTALLATION.md)**.
+
 Prérequis : **Node.js 22.13 ou plus récent** (la base SQLite utilise le module natif `node:sqlite`, aucune compilation n’est nécessaire).
 
 ```bash
