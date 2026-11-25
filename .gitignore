@@ -4,3 +4,5 @@ data/
 *.log
 .DS_Store
 tests/fixtures/private/
+dist-electron/
+release/

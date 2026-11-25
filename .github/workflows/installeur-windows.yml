@@ -1,0 +1,49 @@
+# Construit l'installeur Windows de MétréPlan+ (MetrePlan-Plus-Setup-x.y.z.exe).
+# - À chaque push sur main et sur chaque PR : l'installeur est téléchargeable dans l'onglet Actions
+#   (exécution > section « Artifacts »).
+# - Sur une étiquette v* (ex. v0.1.0) : il est aussi publié dans une Release GitHub.
+name: Installeur Windows
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installation des dépendances
+        run: npm ci
+
+      - name: Construction de l'installeur
+        run: npm run dist:win
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - name: Installeur téléchargeable (Artifacts)
+        uses: actions/upload-artifact@v4
+        with:
+          name: MetrePlan-Plus-Setup
+          path: release/*.exe
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publication dans une Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.exe
+          name: MétréPlan+ ${{ github.ref_name }}

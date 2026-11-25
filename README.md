@@ -5,7 +5,27 @@ Sa particularité : le métré est **piloté par la DPGF** et **contrôlé par r
 
 ![Aperçu : plan du RDC de la démo, article Dallage sélectionné et ses mesures surlignées](docs/apercu.png)
 
-## Démarrage rapide
+## Application de bureau Windows (installeur)
+
+MétréPlan+ s’installe comme un logiciel classique, **sans aucun prérequis** (ni Node.js, ni serveur, ni Docker) :
+
+1. Télécharger `MetrePlan-Plus-Setup-x.y.z.exe` : onglet **Actions** du dépôt › exécution « Installeur Windows » › section
+   **Artifacts** (ou page **Releases** pour une version étiquetée `v…`).
+2. Double-cliquer sur le setup. Windows peut afficher « Windows a protégé votre ordinateur » (installeur non signé) :
+   cliquer sur **Informations complémentaires** puis **Exécuter quand même**.
+3. Suivre l’assistant en français (dossier d’installation modifiable, sans droits administrateur par défaut).
+   Un raccourci **MétréPlan+** est créé sur le bureau et dans le menu Démarrer.
+
+Au premier lancement, le projet de démonstration est créé. Les projets et fichiers importés sont enregistrés dans
+`%APPDATA%\MétréPlan+\donnees` (base `metreplan.sqlite` et dossier `fichiers`) ; ils sont **conservés** lors d’une
+désinstallation ou d’une mise à jour (réinstaller simplement la nouvelle version par-dessus).
+Raccourcis de la fenêtre : `F5` recharger, `F11` plein écran, `F12` outils de diagnostic.
+
+Construction : `npm run dist:win` (sous Windows) produit l’installeur dans `release/` ; `npm run app` lance
+l’application de bureau sans l’installer. Techniquement : Electron embarque Node.js, le serveur Express et la base
+SQLite tournent dans l’application et ne sont accessibles qu’en local (127.0.0.1).
+
+## Démarrage rapide (développement, version web)
 
 Prérequis : **Node.js 22.13 ou plus récent** (la base SQLite utilise le module natif `node:sqlite`, aucune compilation n’est nécessaire).
 

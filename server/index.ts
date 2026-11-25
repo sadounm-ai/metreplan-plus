@@ -2,6 +2,8 @@
 
 import express, { type NextFunction, type Request, type Response } from 'express';
 import multer from 'multer';
+import type { Server } from 'node:http';
+import type { AddressInfo } from 'node:net';
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,11 +13,8 @@ import * as store from './db';
 import { seedDemo } from './seed';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const DATA_DIR = resolve(process.env.METREPLAN_DATA ?? join(root, 'data'));
-const FILES_DIR = join(DATA_DIR, 'fichiers');
-mkdirSync(FILES_DIR, { recursive: true });
 
-export function createApp(db: store.DB, filesDir = FILES_DIR) {
+export function createApp(db: store.DB, filesDir: string) {
   const app = express();
   app.use(express.json({ limit: '50mb' }));
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 200 * 1024 * 1024 } });
@@ -122,19 +121,47 @@ export function createApp(db: store.DB, filesDir = FILES_DIR) {
   return app;
 }
 
-const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-if (isMain) {
-  const db = store.openDb(join(DATA_DIR, 'metreplan.sqlite'));
+export interface ServerOptions {
+  /** Dossier des données : base metreplan.sqlite et sous-dossier fichiers/. */
+  dataDir: string;
+  /** Dossier de l'interface compilée (dist/) à servir ; absent = API seule. */
+  distDir?: string;
+  port: number;
+  host?: string;
+}
+
+/** Ouvre la base, crée la démo au premier lancement et démarre le serveur HTTP. */
+export async function startServer(opts: ServerOptions): Promise<{ server: Server; port: number }> {
+  const filesDir = join(opts.dataDir, 'fichiers');
+  mkdirSync(filesDir, { recursive: true });
+  const db = store.openDb(join(opts.dataDir, 'metreplan.sqlite'));
   if (!store.listProjects(db).some((p) => p.isDemo)) {
-    await seedDemo(db, FILES_DIR);
+    await seedDemo(db, filesDir);
     console.log('Projet de démonstration créé.');
   }
-  const app = createApp(db);
-  const dist = join(root, 'dist');
-  if ((process.argv.includes('--production') || process.env.NODE_ENV === 'production') && existsSync(dist)) {
+  const app = createApp(db, filesDir);
+  const dist = opts.distDir;
+  if (dist && existsSync(dist)) {
     app.use(express.static(dist));
     app.get('*', (_req, res) => res.sendFile(join(dist, 'index.html')));
   }
-  const port = Number(process.env.PORT ?? 3001);
-  app.listen(port, () => console.log(`MétréPlan+ API sur http://localhost:${port}`));
+  return new Promise((ok, ko) => {
+    const server = opts.host ? app.listen(opts.port, opts.host) : app.listen(opts.port);
+    server.once('error', ko);
+    server.once('listening', () => {
+      server.off('error', ko);
+      ok({ server, port: (server.address() as AddressInfo).port });
+    });
+  });
+}
+
+const isMain = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  const production = process.argv.includes('--production') || process.env.NODE_ENV === 'production';
+  const { port } = await startServer({
+    dataDir: resolve(process.env.METREPLAN_DATA ?? join(root, 'data')),
+    distDir: production ? join(root, 'dist') : undefined,
+    port: Number(process.env.PORT ?? 3001),
+  });
+  console.log(`MétréPlan+ API sur http://localhost:${port}`);
 }
