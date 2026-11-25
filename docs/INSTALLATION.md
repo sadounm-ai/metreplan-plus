@@ -4,15 +4,17 @@ Guide pas à pas pour installer, lancer et mettre à jour MétréPlan+ sur son o
 
 ## En bref
 
-MétréPlan+ s'installe en 20 à 30 minutes sur un ordinateur Windows, Mac ou Linux. Il suffit d'installer un seul logiciel gratuit (Node.js), de récupérer l'application et de taper quatre commandes.
+Sous Windows, MétréPlan+ s'installe comme un logiciel classique, en 5 minutes, avec un installeur (fichier .exe) : aucun autre logiciel à installer, aucune commande à taper. C'est la méthode recommandée. Sur Mac et Linux, ou pour un usage avancé sous Windows, l'installation prend 20 à 30 minutes : il faut installer Node.js, récupérer l'application et taper quatre commandes.
 
 Une fois installée, l'application fonctionne **sur votre ordinateur**, dans votre navigateur internet (Chrome, Edge ou Firefox). Vos projets, plans et DPGF restent chez vous : rien n'est envoyé sur internet.
 
-Le principe à retenir : une **fenêtre noire** (l'« Invite de commandes ») fait tourner l'application. Tant qu'elle est ouverte, MétréPlan+ est accessible à l'adresse http://localhost:3001 dans votre navigateur. Quand vous la fermez, l'application s'arrête, et vos données restent enregistrées.
+Avec l'installeur, MétréPlan+ s'ouvre dans sa propre fenêtre, comme Excel ou Word. Avec la méthode avancée, une **fenêtre noire** (l'« Invite de commandes ») fait tourner l'application. Tant qu'elle est ouverte, MétréPlan+ est accessible à l'adresse http://localhost:3001 dans votre navigateur. Quand vous la fermez, l'application s'arrête, et vos données restent enregistrées.
 
 ## Ce qu'il vous faut
 
 Un seul logiciel est indispensable : **Node.js version 22.13 ou plus récente**. La base de données est intégrée à Node.js, il n'y a rien d'autre à installer ni à paramétrer.
+
+**Avec l'installeur Windows, vous n'avez besoin de rien de plus qu'un PC sous Windows 10 ou 11** : passez directement à la section suivante. Le tableau ci-dessous concerne la méthode avancée, macOS et Linux.
 
 | Élément | Minimum conseillé | Remarque |
 | --- | --- | --- |
@@ -28,7 +30,32 @@ Vous aurez aussi besoin de vous connecter à votre compte GitHub pour téléchar
 
 **Le mot « commande »** désigne une ligne de texte que vous tapez (ou collez) dans la fenêtre noire, puis que vous validez avec la touche **Entrée**. Dans ce guide, chaque commande est dans un cadre gris : copiez-la telle quelle.
 
-## Installation sous Windows
+## Installation sous Windows avec l'installeur (recommandé)
+
+Comptez 5 minutes. Aucun prérequis : ni Node.js, ni Git, ni serveur, ni commande à taper.
+
+### Étape 1 : télécharger l'installeur
+
+1. Connectez-vous sur [github.com](https://github.com) avec votre compte et ouvrez le dépôt [metreplan-plus](https://github.com/sadounm-ai/metreplan-plus).
+2. Si une version numérotée existe, ouvrez la page **Releases** (colonne de droite) et téléchargez `MetrePlan-Plus-Setup-x.y.z.exe` (x.y.z est le numéro de version).
+3. Sinon, ouvrez l'onglet **Actions**, cliquez sur la dernière exécution réussie (coche verte) nommée **Installeur Windows**, descendez à la section **Artifacts** et téléchargez le fichier proposé. S'il arrive en .zip, faites un clic droit, **Extraire tout**, pour obtenir le .exe.
+
+### Étape 2 : lancer l'installation
+
+1. Double-cliquez sur `MetrePlan-Plus-Setup-x.y.z.exe`.
+2. Windows peut afficher **« Windows a protégé votre ordinateur »** : c'est normal, l'installeur n'est pas signé numériquement. Cliquez sur **Informations complémentaires**, puis sur **Exécuter quand même**.
+3. Suivez l'assistant, en français. Vous pouvez changer le dossier d'installation ; aucun droit administrateur n'est demandé par défaut.
+4. À la fin, un raccourci **MétréPlan+** est créé sur le Bureau et dans le menu Démarrer.
+
+### Étape 3 : premier lancement
+
+Double-cliquez sur le raccourci **MétréPlan+**. L'application s'ouvre dans sa propre fenêtre et crée le projet de démonstration au premier lancement. Passez ensuite à la section « Lancer l'application et ouvrir le projet démo » pour la prise en main.
+
+Raccourcis utiles dans la fenêtre : **F5** recharge la page, **F11** passe en plein écran, **F12** ouvre les outils de diagnostic (à n'utiliser que si on vous le demande).
+
+La méthode avancée ci-dessous reste valable, notamment pour les développeurs ou pour tester une version qui n'a pas encore d'installeur.
+
+## Installation sous Windows sans installeur (méthode avancée)
 
 Comptez 20 minutes. Faites les étapes dans l'ordre, sans en sauter.
 
@@ -163,6 +190,10 @@ Puis ouvrez http://localhost:3001 dans le navigateur. Laissez le Terminal ouvert
 
 ### Lancer
 
+**Avec l'installeur Windows** : double-cliquez sur le raccourci **MétréPlan+** du Bureau ou du menu Démarrer. La fenêtre de l'application s'ouvre directement ; pour l'arrêter, fermez-la. Vous pouvez passer à « Ouvrir le projet de démonstration ».
+
+**Avec la méthode avancée** :
+
 Double-cliquez sur **Lancer MetrePlan.bat** sur le Bureau. Sans raccourci, ouvrez l'Invite de commandes et tapez :
 
 ```
@@ -199,9 +230,15 @@ Fermez la fenêtre noire (ou appuyez sur **Ctrl + C** dedans). Tout est enregist
 
 Tous vos projets, plans, CCTP et DPGF importés sont dans le dossier **`C:\MetrePlan\data`** (sur Mac et Linux : `~/MetrePlan/data`). Pour une sauvegarde, copiez ce dossier entier sur un disque externe ou un cloud, application arrêtée. Ne le supprimez jamais : vous perdriez tous vos projets.
 
+**Avec l'installeur Windows**, les données sont ailleurs : dans `%APPDATA%\MétréPlan+\donnees` (base `metreplan.sqlite` et dossier `fichiers`). Pour y accéder, tapez `%APPDATA%` dans la barre d'adresse de l'Explorateur de fichiers, puis ouvrez le dossier MétréPlan+. Ces données sont conservées lors d'une désinstallation ou d'une mise à jour.
+
 ## Mettre à jour l'application
 
 Quand une nouvelle version est publiée sur GitHub (par exemple après la fusion d'une amélioration), commencez toujours par **arrêter l'application** et **sauvegarder le dossier `data`**.
+
+### Si vous avez utilisé l'installeur Windows
+
+Téléchargez le nouvel installeur comme à l'installation, puis exécutez-le : il s'installe par-dessus l'ancienne version. Vos projets sont conservés. Il n'y a rien d'autre à faire.
 
 ### Si vous avez installé avec Git (méthode B)
 
@@ -244,5 +281,14 @@ La plupart des problèmes viennent d'une version de Node.js trop ancienne, d'une
 | Fenêtre « Pare-feu Windows » au premier lancement | Windows signale un programme qui écoute sur le réseau | Cliquez sur Annuler ; l'application reste accessible sur votre ordinateur |
 | Le double-clic sur le .bat ouvre le Bloc-notes | Le fichier s'appelle en réalité `….bat.txt` | Ré-enregistrez en choisissant « Tous les fichiers » comme type |
 | Projet démo modifié ou supprimé | Normal | Bouton **Réinitialiser la démo** sur la page d'accueil |
+
+Avec l'installeur Windows, les seuls cas fréquents sont :
+
+- **« Windows a protégé votre ordinateur »** au lancement du setup : cliquez sur Informations complémentaires, puis Exécuter quand même.
+- **L'antivirus bloque ou supprime le setup** : il se méfie d'un installeur non signé. Autorisez le fichier dans l'antivirus, ou demandez à votre service informatique.
+- **La fenêtre reste blanche** : appuyez sur F5 ; si rien ne change, fermez l'application et relancez-la.
+- **L'onglet Actions ne propose pas de fichier dans Artifacts** : vérifiez que vous êtes connecté à GitHub et que l'exécution choisie a une coche verte. Les fichiers d'une exécution sont supprimés au bout de quelques semaines ; prenez la plus récente.
+
+Le tableau ci-dessus concerne surtout la méthode avancée.
 
 Si un problème persiste, faites une capture d'écran de la fenêtre noire entière et envoyez-la : le message d'erreur suffit en général à trouver la cause.
